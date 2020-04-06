@@ -1,0 +1,23 @@
+{
+	"name": "common",
+	"version": "1.0.0",
+	"description": "Contains common code between the server and client",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc",
+		"lint": "tslint --project ."
+	},
+	"author": "Andrew Rioux",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/ramda": "^0.27.3",
+		"prettier": "^2.0.4",
+		"tslint": "^6.1.1",
+		"tslint-config-prettier": "^1.18.0",
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"ramda": "^0.27.0"
+	}
+}

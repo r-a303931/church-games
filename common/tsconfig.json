@@ -26,7 +26,8 @@
 		"experimentalDecorators": true,
 		"sourceMap": true,
 		"strictNullChecks": true,
-		"strictPropertyInitialization": true
+		"strictPropertyInitialization": true,
+		"declaration": true
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules/**/*.ts", "node_modules"],

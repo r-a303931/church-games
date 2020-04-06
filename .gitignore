@@ -1,1 +1,5 @@
 node_modules
+dist
+common/dist
+common/node_modules
+client/build
