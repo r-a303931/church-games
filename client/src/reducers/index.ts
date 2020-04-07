@@ -32,5 +32,12 @@ export default (state: ClientState = defaultState, action: ClientActions): Clien
 				...state,
 				error: Maybe.some(action.error),
 			};
+
+		case 'GAME_ACTION':
+			if (state.state !== 'IN_GAME') {
+				return state;
+			}
+
+			return state;
 	}
 };
