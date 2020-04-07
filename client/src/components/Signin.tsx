@@ -1,21 +1,27 @@
 import { Button, FormControl, Grid, makeStyles, TextField } from '@material-ui/core';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { ClientActions, login } from '../actions';
-import { ClientState } from '../createStore';
+import { login } from '../actions';
+import { getSocket } from '../createStore';
 
 const useStyles = makeStyles(theme => ({
 	margin: {
-		margin: theme.spacing(3),
+		margin: theme.spacing(2),
 	},
-	centered: {},
+	marginBottom: {
+		marginBottom: theme.spacing(2),
+	},
 }));
+
+const mapDispatch = {
+	login: (socket: SocketIOClient.Socket, name: string, email: string) =>
+		login(socket, name, email),
+};
 
 export const Signin: FunctionComponent<{
 	socket: SocketIOClient.Socket;
-	dispatch: ThunkDispatch<ClientState, undefined, ClientActions>;
-}> = ({ dispatch, socket }) => {
+	login: (socket: SocketIOClient.Socket, name: string, email: string) => void;
+}> = ({ login: loginUser, socket }) => {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [disabled, setDisabled] = useState(false);
@@ -25,7 +31,7 @@ export const Signin: FunctionComponent<{
 	const signin = () => {
 		setDisabled(true);
 
-		dispatch(login(socket, name, email));
+		loginUser(socket, name, email);
 	};
 
 	return (
@@ -43,11 +49,15 @@ export const Signin: FunctionComponent<{
 					value={name}
 					required={true}
 					label="Name"
+					variant="outlined"
+					className={classes.marginBottom}
 				/>
 				<TextField
 					onChange={e => setEmail(e.target.value)}
 					value={email}
 					label="Email (optional)"
+					variant="outlined"
+					title="Used for avatars"
 				/>
 				<Button
 					className={classes.margin}
@@ -63,7 +73,4 @@ export const Signin: FunctionComponent<{
 	);
 };
 
-export default connect(
-	({ socket }: ClientState) => ({ socket }),
-	dispatch => ({ dispatch })
-)(Signin);
+export default connect(getSocket, mapDispatch)(Signin);
