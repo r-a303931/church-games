@@ -152,7 +152,7 @@ export interface Game {
 	/**
 	 * Represents the player who is to go next
 	 */
-	currentPlayer: Player;
+	currentPlayerID: string;
 
 	/**
 	 * Used to differentiate between games

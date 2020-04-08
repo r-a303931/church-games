@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import io from 'socket.io-client';
 import { createContext } from 'vm';
 
-export const socket = io('localhost:3001', {
+export const socket = io({
 	autoConnect: true,
 	reconnection: true,
 });

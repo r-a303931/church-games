@@ -1,4 +1,4 @@
-import { Maybe, reducer } from 'common';
+import { Maybe, reducer, GameType, UNO } from 'common';
 import { pipe } from 'ramda';
 import { ServerActions } from '../actions';
 import { ServerState } from '../createStore';

@@ -5,6 +5,7 @@ import {
 	Fade,
 	FormControl,
 	Grid,
+	Avatar,
 	List,
 	ListItem,
 	ListItemSecondaryAction,
@@ -12,9 +13,10 @@ import {
 	makeStyles,
 	Modal,
 	TextField,
+	ListItemAvatar,
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
-import { GameType, Maybe, SmallRoom } from 'common';
+import { GameType, Maybe, SmallRoom, MaybeObj } from 'common';
 import { pipe } from 'ramda';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
@@ -22,9 +24,12 @@ import { createRoom as createRoomAction, joinRoom as joinRoomAction } from '../a
 import { withSocket } from '../socket';
 import { ClientLoaded } from '../createStore';
 
+import unoIcon from './gameicons/uno.png';
+
 interface PasswordInputShownState {
 	showingInput: true;
 	input: string;
+	targetRoomID: string;
 }
 
 interface PasswordInputNotShownState {
@@ -47,6 +52,7 @@ type NewRoomInputState = NewRoomInputShownState | NewRoomInputNotShownState;
 
 const mapState = (state: ClientLoaded) => ({
 	rooms: state.rooms,
+	error: state.error,
 });
 
 const dispatchProps = {
@@ -80,18 +86,32 @@ const useStyles = makeStyles(theme => ({
 	marginBottom: {
 		marginBottom: theme.spacing(2),
 	},
+	noRoomsTitle: {
+		color: '#888',
+		fontWeight: 'normal',
+		fontSize: 40,
+	},
 }));
 
 const gameNames = {
 	[GameType.UNO]: 'Uno',
 };
 
+const gameIconURLs = {
+	[GameType.UNO]: unoIcon,
+};
+
+const gameIconNames = {
+	[GameType.UNO]: 'Uno',
+};
+
 const RoomList: FunctionComponent<{
 	rooms: SmallRoom[];
 	socket: SocketIOClient.Socket;
+	error: MaybeObj<string>;
 	createRoom: (socket: SocketIOClient.Socket, name: string, password: string) => void;
 	joinRoom: (socket: SocketIOClient.Socket, id: string, password: string) => void;
-}> = ({ socket, rooms, createRoom, joinRoom }) => {
+}> = ({ socket, rooms, createRoom, joinRoom, error }) => {
 	const styles = useStyles();
 
 	const [passwordInput, setPasswordInput] = useState<PasswordInputState>({ showingInput: false });
@@ -106,15 +126,33 @@ const RoomList: FunctionComponent<{
 		createRoom(socket, newRoomInput.name, newRoomInput.password);
 	};
 
+	const joinRoomClickHandler = () => {
+		if (!passwordInput.showingInput) {
+			return;
+		}
+
+		joinRoom(socket, passwordInput.targetRoomID, passwordInput.input);
+	};
+
 	return (
 		<>
 			{rooms.length === 0 ? (
-				<div>Create a room?</div>
+				<div className={styles.modal} style={{ minHeight: '100vh' }}>
+					<h2 className={styles.noRoomsTitle}>
+						<i>There are no rooms. Create one?</i>
+					</h2>
+				</div>
 			) : (
 				<List>
 					{rooms.map((room, index) => (
 						<ListItem key={index}>
+							{room.currentGame.hasValue ? (
+								<ListItemAvatar>
+									<Avatar src={gameIconURLs[room.currentGame.value]} />
+								</ListItemAvatar>
+							) : null}
 							<ListItemText
+								inset={!room.currentGame.hasValue}
 								primary={room.name}
 								secondary={`${pipe(
 									Maybe.map<GameType, string>(
@@ -127,9 +165,16 @@ const RoomList: FunctionComponent<{
 							/>
 							<ListItemSecondaryAction>
 								<Button
+									variant="contained"
 									aria-label="join"
 									onClick={() =>
-										room.needsPassword ? null : joinRoom(socket, room.id, '')
+										room.needsPassword
+											? setPasswordInput({
+													showingInput: true,
+													input: '',
+													targetRoomID: room.id,
+											  })
+											: joinRoom(socket, room.id, '')
 									}
 								>
 									Join
@@ -206,6 +251,59 @@ const RoomList: FunctionComponent<{
 									variant="contained"
 									disabled={disabled}
 									onClick={createRoomClickHandler}
+								>
+									Submit
+								</Button>
+							</FormControl>
+						</Grid>
+					</div>
+				</Fade>
+			</Modal>
+			<Modal
+				className={styles.modal}
+				open={passwordInput.showingInput}
+				onClose={() => setPasswordInput({ showingInput: false })}
+				closeAfterTransition={true}
+				BackdropComponent={Backdrop}
+				BackdropProps={{
+					timeout: 500,
+				}}
+			>
+				<Fade in={passwordInput.showingInput}>
+					<div className={styles.paper}>
+						<Grid
+							container={true}
+							spacing={0}
+							direction="column"
+							alignItems="center"
+							justify="center"
+						>
+							<FormControl className={styles.margin}>
+								<TextField
+									onChange={e =>
+										setPasswordInput({
+											showingInput: true,
+											input: e.target.value,
+											targetRoomID: passwordInput.showingInput
+												? passwordInput.targetRoomID
+												: '',
+										})
+									}
+									value={passwordInput.showingInput ? passwordInput.input : ''}
+									required={true}
+									label="Room Password"
+									variant="outlined"
+									className={styles.marginBottom}
+									type="password"
+									error={Maybe.isSome(error)}
+									helperText={Maybe.orSome('')(error)}
+								/>
+								<Button
+									className={styles.margin}
+									color="primary"
+									variant="contained"
+									disabled={disabled}
+									onClick={joinRoomClickHandler}
 								>
 									Submit
 								</Button>
