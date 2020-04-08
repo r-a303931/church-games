@@ -1,11 +1,11 @@
-import { ClientState } from '../createStore';
+import { Maybe, reducer } from 'common';
 import { ClientActions } from '../actions';
-import { socket } from '../socket';
-import { Maybe } from 'common';
+import { ClientState } from '../createStore';
+// Game reducers
+import unoReducer from './uno';
 
 const defaultState: ClientState = {
 	state: 'UNLOADED',
-	socket,
 	error: Maybe.none(),
 };
 
@@ -14,17 +14,21 @@ export default (state: ClientState = defaultState, action: ClientActions): Clien
 		case 'LOAD_ROOMS':
 			return {
 				state: 'LOADED_MAIN',
-				socket: state.socket,
 				rooms: action.rooms,
 				error: Maybe.none(),
+				me: action.me,
 			};
 
 		case 'LOAD_ROOM':
+			if (state.state === 'UNLOADED') {
+				return state;
+			}
+
 			return {
 				state: 'IN_GAME',
-				socket: state.socket,
 				game: action.room,
 				error: Maybe.none(),
+				me: state.me,
 			};
 
 		case 'ERROR':
@@ -38,6 +42,19 @@ export default (state: ClientState = defaultState, action: ClientActions): Clien
 				return state;
 			}
 
-			return state;
+			return {
+				...state,
+				game: reducer(unoReducer)(state.game, action.action),
+			};
+
+		case 'UPDATE_ROOMS':
+			if (state.state !== 'LOADED_MAIN') {
+				return state;
+			}
+
+			return {
+				...state,
+				rooms: action.rooms,
+			};
 	}
 };

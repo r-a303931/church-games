@@ -21,7 +21,7 @@
 			"name": "Launch Server",
 			"skipFiles": ["<node_internals>/**"],
 			"program": "${workspaceFolder}/dist/index.js",
-			"preLaunchTask": "tsc: build - tsconfig.json",
+			// "preLaunchTask": "tsc: build - tsconfig.json",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"env": {
 				"NODE_ENV": "development"

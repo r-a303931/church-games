@@ -1,8 +1,8 @@
-import { Button, FormControl, Grid, makeStyles, TextField } from '@material-ui/core';
+import { Button, Grid, makeStyles, TextField, FormGroup } from '@material-ui/core';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
 import { login } from '../actions';
-import { getSocket } from '../createStore';
+import { withSocket } from '../socket';
 
 const useStyles = makeStyles(theme => ({
 	margin: {
@@ -14,8 +14,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const mapDispatch = {
-	login: (socket: SocketIOClient.Socket, name: string, email: string) =>
-		login(socket, name, email),
+	login,
 };
 
 export const Signin: FunctionComponent<{
@@ -43,7 +42,7 @@ export const Signin: FunctionComponent<{
 			justify="center"
 			style={{ minHeight: '100vh' }}
 		>
-			<FormControl className={classes.margin}>
+			<FormGroup className={classes.margin}>
 				<TextField
 					onChange={e => setName(e.target.value)}
 					value={name}
@@ -60,6 +59,7 @@ export const Signin: FunctionComponent<{
 					title="Used for avatars"
 				/>
 				<Button
+					type="submit"
 					className={classes.margin}
 					color="primary"
 					variant="contained"
@@ -68,9 +68,9 @@ export const Signin: FunctionComponent<{
 				>
 					Submit
 				</Button>
-			</FormControl>
+			</FormGroup>
 		</Grid>
 	);
 };
 
-export default connect(getSocket, mapDispatch)(Signin);
+export default withSocket(connect(undefined, mapDispatch)(Signin));

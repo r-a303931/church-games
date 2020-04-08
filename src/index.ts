@@ -1,12 +1,12 @@
-import { Game, GameType, Maybe, MaybeObj, Room, SmallRoom, matchByProp } from 'common';
+import { Game, GameType, Maybe, MaybeObj, RoomParticipant, SmallRoom, Room } from 'common';
 import * as express from 'express';
 import { createServer } from 'http';
 import { join } from 'path';
-import { pipe } from 'ramda';
 import * as io from 'socket.io';
 import { v4 } from 'uuid';
-import { addParticipant, removeParticipant } from './actions';
-import createStore, { ServerRoomParticipant, ServerState, ServerStore } from './createStore';
+import { addParticipant, createRoom, joinRoom, removeParticipant, leaveRoom } from './actions';
+import createStore, { ServerState, ServerRoomParticipant } from './createStore';
+import participantRoom from './lib/participantRoom';
 
 const app: express.Application = express();
 const httpServer = createServer(app);
@@ -32,8 +32,17 @@ app.get('*', (req, res) => {
 	res.sendFile(join(clientBuildPath, 'index.html'));
 });
 
-const wanderers: { [key: string]: ServerRoomParticipant } = {};
-const rooms: { [key: string]: { namespace: io.Namespace; store: ServerStore } } = {};
+const sockets: { [key: string]: SocketIO.Socket } = {};
+const store = createStore(websocketServer, sockets);
+
+export const getSmallRooms = (state: ServerState | undefined): SmallRoom[] =>
+	Object.values(state?.rooms ?? []).map(({ currentGame, id, name, password, participants }) => ({
+		currentGame: Maybe.map<Game, GameType>(game => game.type)(currentGame),
+		id,
+		name,
+		needsPassword: password.hasValue,
+		participantCount: participants.length,
+	}));
 
 websocketServer.on('connect', socket => {
 	console.log('Client connection made');
@@ -42,66 +51,28 @@ websocketServer.on('connect', socket => {
 		'login',
 		(
 			{ name, email }: { name: string; email: MaybeObj<string> },
-			ack: (rooms: SmallRoom[]) => void
+			ack: (rooms: SmallRoom[], participant: RoomParticipant) => void
 		) => {
 			console.log('Client "connect" event');
 
-			const conn = v4();
-			const participant = {
+			const participant: ServerRoomParticipant = {
 				email,
 				name,
 				id: v4(),
-				socket,
 			};
-			let currentRoom: ServerState | null = null;
 
-			wanderers[conn] = participant;
+			sockets[participant.id] = socket;
+
+			store.dispatch(addParticipant(participant));
 
 			socket.on(
 				'join',
 				(id: string, password: string, ackJoin: (room: MaybeObj<Room>) => void) => {
-					if (!!currentRoom) {
-						return ackJoin(Maybe.none());
-					}
+					store.dispatch(joinRoom(participant)(id, password));
 
-					const room = rooms[id];
-
-					if (!room) {
-						return ackJoin(Maybe.none());
-					}
-
-					const roomObject = room.store.getState();
-
-					if (
-						pipe(
-							Maybe.map(roomPassword => roomPassword === password),
-							Maybe.orSome(true)
-						)(roomObject.password)
-					) {
-						// Remove them from the wanderers list
-						delete wanderers[conn];
-
-						currentRoom = room.store.getState();
-
-						room.store.dispatch(addParticipant(participant));
-
-						room.store.subscribe(() => {
-							const obj = room.store.getState();
-
-							if (
-								!obj.participants.find(
-									matchByProp<ServerRoomParticipant>('id')(participant)
-								)
-							) {
-								wanderers[conn] = participant;
-								currentRoom = null;
-							}
-						});
-
-						return ackJoin(Maybe.some(roomObject));
-					} else {
-						return ackJoin(Maybe.none());
-					}
+					const state = store.getState();
+					const returnValue = participantRoom(state)(participant.id);
+					ackJoin(returnValue);
 				}
 			);
 
@@ -112,62 +83,26 @@ websocketServer.on('connect', socket => {
 					password: MaybeObj<string>,
 					ackCreate: (room: MaybeObj<Room>) => void
 				) => {
-					if (!!currentRoom) {
-						return ackCreate(Maybe.none());
-					}
+					store.dispatch(createRoom(participant)(roomName, password));
 
-					const store = createStore(roomName, password);
-
-					const namespaceID = store.getState().id;
-
-					const namespace = websocketServer.of(namespaceID);
-
-					rooms[namespaceID] = {
-						namespace,
-						store,
-					};
-
-					delete wanderers[conn];
-
-					currentRoom = store.getState();
-
-					rooms[namespaceID].store.dispatch(addParticipant(participant));
-
-					ackCreate(Maybe.some(store.getState()));
+					const state = store.getState();
+					const returnValue = participantRoom(state)(participant.id);
+					ackCreate(returnValue);
 				}
 			);
 
 			socket.on('disconnect', () => {
-				if (wanderers[conn]) {
-					delete wanderers[conn];
-				}
+				delete sockets[participant.id];
 
-				if (currentRoom && rooms[currentRoom.id]) {
-					const roomObj = rooms[currentRoom.id];
-
-					roomObj.store.dispatch(removeParticipant(participant));
-
-					if (roomObj.store.getState().participants.length === 0) {
-						roomObj.namespace.removeAllListeners();
-
-						delete websocketServer.nsps[currentRoom.id];
-
-						delete rooms[currentRoom.id];
-					}
-				}
+				store.dispatch(removeParticipant(participant));
+				store.dispatch(leaveRoom(participant));
 			});
 
-			const smallRooms: SmallRoom[] = Object.values(rooms)
-				.map(({ store }) => store.getState())
-				.map(state => ({
-					currentGame: Maybe.map<Game, GameType>(game => game.type)(state.currentGame),
-					id: state.id,
-					name: state.name,
-					needsPassword: state.password.hasValue,
-					participantCount: state.participants.length,
-				}));
-
-			ack(smallRooms);
+			ack(getSmallRooms(store.getState()), {
+				email,
+				name,
+				id: participant.id,
+			});
 		}
 	);
 });

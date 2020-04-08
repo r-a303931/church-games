@@ -1,13 +1,22 @@
-import { Actions, Maybe, SmallRoom, MaybeObj, Room } from 'common';
+import { Actions, Maybe, MaybeObj, Room, SmallRoom, RoomParticipant } from 'common';
 import { Dispatch } from 'react';
 import { Action } from 'redux';
 
-interface ErrorAction extends Action<'ERROR'> {
+export interface ErrorAction extends Action<'ERROR'> {
 	error: string;
+}
+
+export interface RoomAction extends Action<'GAME_ACTION'> {
+	action: Actions;
 }
 
 // #region Authentication
 interface LoadRoomsAction extends Action<'LOAD_ROOMS'> {
+	rooms: SmallRoom[];
+	me: RoomParticipant;
+}
+
+interface UpdateRoomsAction extends Action<'UPDATE_ROOMS'> {
 	rooms: SmallRoom[];
 }
 
@@ -17,10 +26,11 @@ export const login = (socket: SocketIOClient.Socket, name: string, email: string
 	socket.emit(
 		'login',
 		{ name, email: !!email ? Maybe.some(email) : Maybe.none() },
-		(rooms: SmallRoom[]) => {
+		(rooms: SmallRoom[], me: RoomParticipant) => {
 			dispatch({
 				type: 'LOAD_ROOMS',
 				rooms,
+				me,
 			});
 		}
 	);
@@ -42,11 +52,39 @@ export const joinRoom = (socket: SocketIOClient.Socket, id: string, password: st
 		} else {
 			dispatch({
 				type: 'ERROR',
-				error: 'Incorrect password',
+				error: 'Invalid password',
 			});
 		}
 	});
 };
+
+export const createRoom = (socket: SocketIOClient.Socket, id: string, password: string) => (
+	dispatch: Dispatch<ClientActions>
+) => {
+	socket.emit(
+		'create',
+		id,
+		!!password ? Maybe.some(password) : Maybe.none(),
+		(room: MaybeObj<Room>) => {
+			if (room.hasValue) {
+				dispatch({
+					type: 'LOAD_ROOM',
+					room: room.value,
+				});
+			} else {
+				dispatch({
+					type: 'ERROR',
+					error: 'Unknown error',
+				});
+			}
+		}
+	);
+};
 //#endregion
 
-export type ClientActions = ErrorAction | LoadRoomsAction | LoadRoomAction | Actions;
+export type ClientActions =
+	| ErrorAction
+	| UpdateRoomsAction
+	| LoadRoomsAction
+	| LoadRoomAction
+	| RoomAction;

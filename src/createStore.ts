@@ -1,35 +1,38 @@
-import { Maybe, MaybeObj, Room, RoomParticipant } from 'common';
+import { Room, RoomParticipant } from 'common';
 import { applyMiddleware, createStore, Store } from 'redux';
-import { createLogger } from 'redux-logger';
-import { v4 } from 'uuid';
+import * as io from 'socket.io';
 import { ServerActions } from './actions';
+import syncStateMiddleware from './lib/syncStateMiddleware';
 import reducers from './reducers';
 
-export interface ServerRoomParticipant extends RoomParticipant {
-	socket: SocketIO.Socket;
-}
-
+export type ServerRoomParticipant = RoomParticipant;
 /**
  * This represents all the information the server holds
  */
-export type ServerState = Room<ServerRoomParticipant>;
+export interface ServerState {
+	/**
+	 * The key is the Room.id property
+	 */
+	rooms: { [key: string]: Room };
+
+	/**
+	 * This is everyone who has signed in
+	 *
+	 * Again, key is the .id property
+	 */
+	members: { [key: string]: ServerRoomParticipant };
+}
 
 export type ServerStore = Store<ServerState, ServerActions>;
 
-const createDefaultValue = (name: string, password: MaybeObj<string>): ServerState => ({
-	chat: [],
-	currentGame: Maybe.none(),
-	id: v4(),
-	name,
-	participants: [],
-	password,
-});
+export default (websocketServer: io.Server, sockets: { [key: string]: io.Socket }): ServerStore => {
+	const store = createStore(
+		reducers,
+		{ rooms: {}, members: {} },
+		applyMiddleware(/*createLogger({}), */ syncStateMiddleware(websocketServer, sockets))
+	);
 
-export default (roomName: string, password: MaybeObj<string>): ServerStore =>
-	process.env.NODE_ENV === 'development'
-		? createStore(
-				reducers,
-				createDefaultValue(roomName, password),
-				applyMiddleware(createLogger({}))
-		  )
-		: createStore(reducers, createDefaultValue(roomName, password));
+	store.dispatch({ type: 'INIT' });
+
+	return store;
+};

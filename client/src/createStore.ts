@@ -1,12 +1,11 @@
-import { Maybe, MaybeObj, Room, SmallRoom } from 'common';
+import { Maybe, MaybeObj, Room, SmallRoom, RoomParticipant, Actions } from 'common';
 import { applyMiddleware, compose, createStore } from 'redux';
 import thunk, { ThunkDispatch } from 'redux-thunk';
-import { ClientActions } from './actions';
+import { ClientActions, login } from './actions';
 import reducers from './reducers';
 import { socket } from './socket';
 
 interface ClientStateBase {
-	socket: SocketIOClient.Socket;
 	error: MaybeObj<string>;
 }
 
@@ -17,20 +16,17 @@ export interface ClientUnloaded extends ClientStateBase {
 export interface ClientLoaded extends ClientStateBase {
 	state: 'LOADED_MAIN';
 	rooms: SmallRoom[];
+	me: RoomParticipant;
 }
 
-export interface ClientInGame extends ClientStateBase {
+export interface ClientInRoom extends ClientStateBase {
 	state: 'IN_GAME';
-	socket: SocketIOClient.Socket;
 	game: Room;
+	me: RoomParticipant;
 }
 
 export type ClientStateType = 'IN_GAME' | 'LOADED_MAIN' | 'UNLOADED';
-export type ClientState = ClientUnloaded | ClientLoaded | ClientInGame;
-
-export const getSocket = (state: ClientStateBase = { socket, error: Maybe.none() }) => ({
-	socket: state.socket,
-});
+export type ClientState = ClientUnloaded | ClientLoaded | ClientInRoom;
 
 // @ts-ignore
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
@@ -38,7 +34,7 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 export default () => {
 	const store = createStore(
 		reducers,
-		{ socket, state: 'UNLOADED', error: Maybe.none() },
+		{ state: 'UNLOADED', error: Maybe.none() },
 		composeEnhancers(applyMiddleware(thunk))
 	);
 
@@ -49,6 +45,38 @@ export default () => {
 			});
 		}
 	}
+
+	socket.on('roomsUpdate', (rooms: SmallRoom[]) => {
+		store.dispatch({
+			type: 'UPDATE_ROOMS',
+			rooms,
+		});
+	});
+
+	socket.on('action', (action: Actions) => {
+		store.dispatch({
+			type: 'GAME_ACTION',
+			action,
+		});
+	});
+
+	socket.on('reconnecting', () => {
+		console.log('Reconnecting');
+	});
+
+	socket.on('reconnect', () => {
+		console.log('Reconnected');
+		const state = store.getState();
+
+		if (state && state.state !== 'UNLOADED') {
+			console.log('Signing back in');
+			login(
+				socket,
+				state.me.name,
+				Maybe.orSome('')(state.me.email)
+			)(store.dispatch.bind(store));
+		}
+	});
 
 	return store;
 };

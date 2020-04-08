@@ -1,18 +1,25 @@
 import {
+	Backdrop,
+	Button,
 	Fab,
+	Fade,
+	FormControl,
+	Grid,
 	List,
 	ListItem,
 	ListItemSecondaryAction,
 	ListItemText,
 	makeStyles,
-	Button,
+	Modal,
+	TextField,
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import { GameType, Maybe, SmallRoom } from 'common';
 import { pipe } from 'ramda';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
-import { joinRoom as joinRoomAction } from '../actions';
+import { createRoom as createRoomAction, joinRoom as joinRoomAction } from '../actions';
+import { withSocket } from '../socket';
 import { ClientLoaded } from '../createStore';
 
 interface PasswordInputShownState {
@@ -40,11 +47,10 @@ type NewRoomInputState = NewRoomInputShownState | NewRoomInputNotShownState;
 
 const mapState = (state: ClientLoaded) => ({
 	rooms: state.rooms,
-	socket: state.socket,
 });
 
 const dispatchProps = {
-	createRoom: (name: string, password: string) => {},
+	createRoom: createRoomAction,
 	joinRoom: joinRoomAction,
 };
 
@@ -62,6 +68,18 @@ const useStyles = makeStyles(theme => ({
 	extendedIcon: {
 		marginRight: theme.spacing(1),
 	},
+	paper: {
+		backgroundColor: theme.palette.background.paper,
+		border: '2px solid #000',
+		boxShadow: theme.shadows[5],
+		padding: theme.spacing(2, 4, 3),
+	},
+	margin: {
+		margin: theme.spacing(2),
+	},
+	marginBottom: {
+		marginBottom: theme.spacing(2),
+	},
 }));
 
 const gameNames = {
@@ -71,18 +89,27 @@ const gameNames = {
 const RoomList: FunctionComponent<{
 	rooms: SmallRoom[];
 	socket: SocketIOClient.Socket;
-	createRoom: (name: string, password: string) => void;
+	createRoom: (socket: SocketIOClient.Socket, name: string, password: string) => void;
 	joinRoom: (socket: SocketIOClient.Socket, id: string, password: string) => void;
 }> = ({ socket, rooms, createRoom, joinRoom }) => {
 	const styles = useStyles();
 
 	const [passwordInput, setPasswordInput] = useState<PasswordInputState>({ showingInput: false });
 	const [newRoomInput, setNewRoomInput] = useState<NewRoomInputState>({ showingInput: false });
+	const [disabled, setDisabled] = useState<boolean>(false);
+
+	const createRoomClickHandler = () => {
+		if (!newRoomInput.showingInput) {
+			return;
+		}
+
+		createRoom(socket, newRoomInput.name, newRoomInput.password);
+	};
 
 	return (
 		<>
 			{rooms.length === 0 ? (
-				<div>There are no rooms</div>
+				<div>Create a room?</div>
 			) : (
 				<List>
 					{rooms.map((room, index) => (
@@ -94,7 +121,7 @@ const RoomList: FunctionComponent<{
 										name => `Currently playing: ${gameNames[name]} :: `
 									),
 									Maybe.orSome('')
-								)}${room.participantCount} player${
+								)(room.currentGame)}${room.participantCount} player${
 									room.participantCount !== 1 ? 's' : ''
 								}${room.needsPassword ? ' (Requires password)' : ''}`}
 							/>
@@ -112,12 +139,83 @@ const RoomList: FunctionComponent<{
 					))}
 				</List>
 			)}
-			<Fab color="primary" className={styles.bottomRight} variant="extended" size="medium">
+			<Fab
+				color="primary"
+				className={styles.bottomRight}
+				variant="extended"
+				onClick={() => {
+					setNewRoomInput({ showingInput: true, name: '', password: '' });
+				}}
+			>
 				<AddIcon className={styles.extendedIcon} />
 				Add Room
 			</Fab>
+			<Modal
+				className={styles.modal}
+				open={newRoomInput.showingInput}
+				onClose={() => setNewRoomInput({ showingInput: false })}
+				closeAfterTransition={true}
+				BackdropComponent={Backdrop}
+				BackdropProps={{
+					timeout: 500,
+				}}
+			>
+				<Fade in={newRoomInput.showingInput}>
+					<div className={styles.paper}>
+						<Grid
+							container={true}
+							spacing={0}
+							direction="column"
+							alignItems="center"
+							justify="center"
+						>
+							<FormControl className={styles.margin}>
+								<TextField
+									onChange={e =>
+										setNewRoomInput({
+											showingInput: true,
+											name: e.target.value,
+											password: newRoomInput.showingInput
+												? newRoomInput.password
+												: '',
+										})
+									}
+									value={newRoomInput.showingInput ? newRoomInput.name : ''}
+									required={true}
+									label="Room Name"
+									variant="outlined"
+									className={styles.marginBottom}
+								/>
+								<TextField
+									onChange={e =>
+										setNewRoomInput({
+											showingInput: true,
+											password: e.target.value,
+											name: newRoomInput.showingInput
+												? newRoomInput.name
+												: '',
+										})
+									}
+									value={newRoomInput.showingInput ? newRoomInput.password : ''}
+									label="Password (optional)"
+									variant="outlined"
+								/>
+								<Button
+									className={styles.margin}
+									color="primary"
+									variant="contained"
+									disabled={disabled}
+									onClick={createRoomClickHandler}
+								>
+									Submit
+								</Button>
+							</FormControl>
+						</Grid>
+					</div>
+				</Fade>
+			</Modal>
 		</>
 	);
 };
 
-export default connect(mapState, dispatchProps)(RoomList);
+export default withSocket(connect(mapState, dispatchProps)(RoomList));
