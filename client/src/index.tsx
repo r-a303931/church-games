@@ -5,6 +5,7 @@ import App from './App';
 import createStore from './createStore';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
+import 'typeface-roboto';
 
 const render = (Component: FunctionComponent<{}>) => {
 	ReactDOM.render(
