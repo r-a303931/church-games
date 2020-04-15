@@ -21,7 +21,7 @@ import { pipe } from 'ramda';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
 import { createRoom as createRoomAction, joinRoom as joinRoomAction } from '../actions';
-import { ClientLoaded } from '../createStore';
+import { ClientLoaded, ThunkDispatcher } from '../createStore';
 import { withSocket } from '../socket';
 import unoIcon from './gameicons/uno.png';
 
@@ -54,10 +54,14 @@ const mapState = (state: ClientLoaded) => ({
 	error: state.error,
 });
 
-const dispatchProps = {
-	createRoom: createRoomAction,
-	joinRoom: joinRoomAction,
-};
+const dispatchProps = (dispatch: ThunkDispatcher) => ({
+	createRoom(socket: SocketIOClient.Socket, name: string, password: string) {
+		dispatch(createRoomAction(socket, name, password));
+	},
+	joinRoom(socket: SocketIOClient.Socket, id: string, password: string) {
+		dispatch(joinRoomAction(socket, id, password));
+	},
+});
 
 const useStyles = makeStyles(theme => ({
 	bottomRight: {
@@ -191,7 +195,19 @@ export const RoomList: FunctionComponent<{
 			) : (
 				<List>
 					{rooms.map((room, index) => (
-						<ShowRoom room={room} onJoinClick={() => void 0} key={index} />
+						<ShowRoom
+							room={room}
+							onJoinClick={() =>
+								!room.needsPassword
+									? joinRoom(socket, room.id, '')
+									: setPasswordInput({
+											showingInput: true,
+											input: '',
+											targetRoomID: room.id,
+									  })
+							}
+							key={index}
+						/>
 					))}
 				</List>
 			)}
