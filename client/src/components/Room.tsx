@@ -1,23 +1,39 @@
+import { ChatItem, RoomParticipant } from 'common';
 import React, { FunctionComponent } from 'react';
-import { Room } from 'common';
-import { Game } from '../games/Game';
 import { connect } from 'react-redux';
-import { ClientInRoom } from '../createStore';
+import { sendChatMessage as sendChatMessageAction } from '../actions';
+import { ClientInRoom, ThunkDispatcher } from '../createStore';
+import { Game } from '../games/Game';
+import { withSocket } from '../socket';
 
 const mapStateToProps = (state: ClientInRoom) => ({
-	room: state.game,
+	chat: state.game.chat,
+	name: state.game.name,
+	participants: state.game.participants,
+	hasGame: state.game.hasGame,
+});
+
+const mapDispatchToProps = (dispatch: ThunkDispatcher) => ({
+	sendChatMessage(socket: SocketIOClient.Socket, message: string) {
+		dispatch(sendChatMessageAction(socket, message));
+	},
 });
 
 export const RoomRender: FunctionComponent<{
-	room: Room;
-}> = ({ room }) => {
+	chat: ChatItem[];
+	socket: SocketIOClient.Socket;
+	name: string;
+	participants: RoomParticipant[];
+	hasGame: boolean;
+	sendChatMessage: (socket: SocketIOClient.Socket, message: string) => void;
+}> = ({ chat, name, participants, hasGame, socket, sendChatMessage }) => {
 	return (
 		<>
-			<Game />
+			<div>{name}</div>
 			{/* is where we do room stuff */}
-			<div>{room.name}</div>
+			<Game />
 		</>
 	);
 };
 
-export default connect(mapStateToProps)(RoomRender);
+export default withSocket(connect(mapStateToProps, mapDispatchToProps)(RoomRender));

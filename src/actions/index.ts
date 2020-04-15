@@ -1,7 +1,7 @@
 import type { Actions, MaybeObj } from 'common';
 import type { Action } from 'redux';
-import { ServerRoomParticipant } from '../createStore';
 import { v4 } from 'uuid';
+import { ServerRoomParticipant } from '../createStore';
 
 export interface ParticipantConnectAction extends Action<'PARTICIPANT_CONNECT'> {
 	participant: ServerRoomParticipant;

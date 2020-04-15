@@ -1,7 +1,7 @@
 import { FunctionComponent } from 'react';
 import { connect } from 'react-redux';
 
-export const Game: FunctionComponent<{}> = ({}) => {
+export const Game: FunctionComponent<{}> = () => {
 	return null;
 };
 

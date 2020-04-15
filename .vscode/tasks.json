@@ -1,0 +1,41 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.build.json",
+			"option": "watch",
+			"problemMatcher": ["$tsc-watch"],
+			"group": "build",
+			"label": "Watch server"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "common/tsconfig.build.json",
+			"option": "watch",
+			"problemMatcher": ["$tsc-watch"],
+			"group": "build",
+			"label": "Watch common"
+		},
+		{
+			"type": "npm",
+			"script": "start-quiet",
+			"path": "client/",
+			"problemMatcher": [],
+			"label": "Webpack client",
+			"detail": "BROWSER=none npm run start"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "client/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": ["$tsc-watch"],
+			"group": "build",
+			"label": "Watch client"
+		},
+		{
+			"label": "Build and watch all",
+			"dependsOn": ["Watch server", "Watch common", "Webpack client", "Watch client"]
+		}
+	]
+}

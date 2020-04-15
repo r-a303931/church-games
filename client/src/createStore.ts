@@ -33,7 +33,7 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 export default () => {
 	const store = createStore(
-		reducers,
+		reducers(Date.now),
 		{ state: 'UNLOADED', error: Maybe.none() },
 		composeEnhancers(applyMiddleware(thunk))
 	);
@@ -41,7 +41,7 @@ export default () => {
 	if (process.env.NODE_ENV === 'development') {
 		if (module.hot) {
 			module.hot.accept('./reducers', () => {
-				store.replaceReducer(reducers);
+				store.replaceReducer(reducers(Date.now));
 			});
 		}
 	}

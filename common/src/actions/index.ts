@@ -16,6 +16,12 @@ export interface RoomLeaveAction extends Action<'LEAVE_ROOM'> {
 	participant: RoomParticipant;
 }
 
+export interface NewChatAction extends Action<'NEW_CHAT'> {
+	participant: RoomParticipant;
+
+	message: string;
+}
+
 export const joinRoom = (participant: RoomParticipant): Actions => ({
 	type: 'JOIN_ROOM',
 	participant,
@@ -26,4 +32,10 @@ export const leaveRoom = (participant: RoomParticipant): Actions => ({
 	participant,
 });
 
-export type Actions = RoomLeaveAction | RoomJoinAction | UnoAction;
+export const sendChat = (participant: RoomParticipant) => (message: string): Actions => ({
+	type: 'NEW_CHAT',
+	message,
+	participant,
+});
+
+export type Actions = NewChatAction | RoomLeaveAction | RoomJoinAction | UnoAction;

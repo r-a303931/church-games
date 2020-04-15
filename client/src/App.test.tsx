@@ -1,9 +1,15 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import App from './App';
+import { App } from './App';
+import { shallow } from 'enzyme';
 
-test('renders learn react link', () => {
-	const { getByText } = render(<App />);
-	const linkElement = getByText(/learn react/i);
-	expect(linkElement).toBeInTheDocument();
+it('renders `unloaded` without crashing', () => {
+	shallow(<App state="UNLOADED" />);
+});
+
+it('renders `loaded main` without crashing', () => {
+	shallow(<App state="LOADED_MAIN" />);
+});
+
+it('renders `in game` without crashing', () => {
+	shallow(<App state="IN_GAME" />);
 });

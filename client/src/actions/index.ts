@@ -35,7 +35,9 @@ export const login = (socket: SocketIOClient.Socket, name: string, email: string
 		}
 	);
 };
+//#endregion
 
+//#region Room actions
 interface LoadRoomAction extends Action<'LOAD_ROOM'> {
 	room: Room;
 }
@@ -79,6 +81,12 @@ export const createRoom = (socket: SocketIOClient.Socket, id: string, password: 
 			}
 		}
 	);
+};
+
+export const sendChatMessage = (socket: SocketIOClient.Socket, message: string) => (
+	dispatchEvent: Dispatch<ClientActions>
+) => {
+	socket.emit('action', { type: 'NEW_CHAT', message });
 };
 //#endregion
 

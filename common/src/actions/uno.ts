@@ -1,5 +1,12 @@
 import { Action } from 'redux';
+import { UNO } from '../types';
 
-type InitAction = Action<'INIT'>;
+export interface InitAction extends Action<'INIT'> {
+	playerIDs: string[];
+}
 
-export type UnoActions = InitAction;
+export interface InitializedAction extends Action<'INIT_DONE'> {
+	readyGame: UNO.Game;
+}
+
+export type UnoActions = InitializedAction | InitAction;

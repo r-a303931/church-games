@@ -8,7 +8,7 @@ import Signin from './components/Signin';
 import { ClientState, ClientStateType } from './createStore';
 import Room from './components/Room';
 
-const App: FunctionComponent<{ state: ClientStateType }> = state => {
+export const App: FunctionComponent<{ state: ClientStateType }> = state => {
 	return state.state === 'UNLOADED' ? (
 		<Signin />
 	) : state.state === 'LOADED_MAIN' ? (

@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SeededRandom should always generate the same numbers with the same seed 1`] = `0.7888911063018895`;
+
+exports[`SeededRandom should always generate the same numbers with the same seed 2`] = `0.0979344929655781`;
+
+exports[`SeededRandom should always generate the same numbers with the same seed 3`] = `0.27081999565052683`;
+
+exports[`SeededRandom should always generate the same numbers with the same seed 4`] = `0.6703682664092412`;
+
+exports[`random library should generate UUIDs 1`] = `"0620c573-8e7c-4b37-bb95-c20ea9af9f44"`;
+
+exports[`random library should generate UUIDs 2`] = `"d32c369e-aff4-41c5-8840-0409e2bb7479"`;
+
+exports[`random library should generate UUIDs 3`] = `"4a46401c-727d-45b9-a1e4-d2318e42497d"`;
+
+exports[`random library should generate UUIDs 4`] = `"b926e88b-3b47-492f-9333-c8df1d1e49a5"`;
+
+exports[`random library should generate UUIDs 5`] = `"3e6ad2fb-b1f7-4056-ad7a-9de0132eee57"`;
+
+exports[`random library should generate UUIDs 6`] = `"44e2c6a5-93d1-4f6d-927c-0b2ecd5a9d05"`;
+
+exports[`random library should generate numbers as an iterator 1`] = `0.07355694870420848`;
+
+exports[`random library should generate numbers as an iterator 2`] = `0.8784015711680695`;
+
+exports[`random library should generate numbers as an iterator 3`] = `0.9668333493468708`;
+
+exports[`random library should get a number from 0 to the number specified 1`] = `2.7081999565052683`;
+
+exports[`random library should get a number in the range specified 1`] = `8.944455531509448`;
+
+exports[`random library should get an integer from 0 to the number specified 1`] = `6`;
+
+exports[`random library should get an integer in the range specified 1`] = `5`;
+
+exports[`random library should shuffle an array 1`] = `[Function]`;

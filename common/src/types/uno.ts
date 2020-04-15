@@ -142,7 +142,7 @@ export interface Game {
 	/**
 	 * The discard pile contains cards that have already been played
 	 */
-	discardPile: PlayedWildDraw4Card[];
+	discardPile: PlayedCard[];
 
 	/**
 	 * Represents each player in the started game

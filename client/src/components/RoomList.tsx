@@ -1,29 +1,28 @@
 import {
+	Avatar,
 	Backdrop,
 	Button,
 	Fab,
 	Fade,
 	FormControl,
 	Grid,
-	Avatar,
 	List,
 	ListItem,
+	ListItemAvatar,
 	ListItemSecondaryAction,
 	ListItemText,
 	makeStyles,
 	Modal,
 	TextField,
-	ListItemAvatar,
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
-import { GameType, Maybe, SmallRoom, MaybeObj } from 'common';
+import { GameType, Maybe, MaybeObj, SmallRoom } from 'common';
 import { pipe } from 'ramda';
 import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
 import { createRoom as createRoomAction, joinRoom as joinRoomAction } from '../actions';
-import { withSocket } from '../socket';
 import { ClientLoaded } from '../createStore';
-
+import { withSocket } from '../socket';
 import unoIcon from './gameicons/uno.png';
 
 interface PasswordInputShownState {
@@ -101,11 +100,59 @@ const gameIconURLs = {
 	[GameType.UNO]: unoIcon,
 };
 
-const gameIconNames = {
-	[GameType.UNO]: 'Uno',
-};
+export const ShowRoom: FunctionComponent<{
+	room: SmallRoom;
+	onJoinClick: (room: SmallRoom) => void;
+}> = ({ room, onJoinClick }) => (
+	<ListItem>
+		{room.currentGame.hasValue ? (
+			<ListItemAvatar>
+				<Avatar src={gameIconURLs[room.currentGame.value]} />
+			</ListItemAvatar>
+		) : null}
+		<ListItemText
+			inset={!room.currentGame.hasValue}
+			primary={room.name}
+			secondary={`${pipe(
+				Maybe.map<GameType, string>(name => `Currently playing: ${gameNames[name]} :: `),
+				Maybe.orSome('')
+			)(room.currentGame)}${room.participantCount} player${
+				room.participantCount !== 1 ? 's' : ''
+			}${room.needsPassword ? ' (Requires password)' : ''}`}
+		/>
+		<ListItemSecondaryAction>
+			<Button variant="contained" aria-label="join" onClick={() => onJoinClick(room)}>
+				Join
+			</Button>
+		</ListItemSecondaryAction>
+	</ListItem>
+);
 
-const RoomList: FunctionComponent<{
+// export const NewRoomDialogue: FunctionComponent<{
+// 	showing: boolean;
+// 	onClose: () => void;
+// }> = ({ showing, onClose }) => {
+// 	const [passwordInput, setPasswordInput] = useState<string>('');
+// 	const [roomNameInput, setRoomNameInput] = useState<string>('');
+
+// 	return null;
+// };
+
+// export const JoinRoomDialogue: FunctionComponent<{
+// 	showing: boolean;
+// 	onClose: () => void;
+// 	room: SmallRoom;
+// }> = ({ showing, onClose, room }) => {
+// 	const [passwordInput, setPasswordInput] = useState<string>('');
+
+// 	if (!showing && passwordInput !== '') {
+// 		setPasswordInput('');
+// 	}
+
+// 	return null;
+// };
+
+export const RoomList: FunctionComponent<{
 	rooms: SmallRoom[];
 	socket: SocketIOClient.Socket;
 	error: MaybeObj<string>;
@@ -116,7 +163,6 @@ const RoomList: FunctionComponent<{
 
 	const [passwordInput, setPasswordInput] = useState<PasswordInputState>({ showingInput: false });
 	const [newRoomInput, setNewRoomInput] = useState<NewRoomInputState>({ showingInput: false });
-	const [disabled, setDisabled] = useState<boolean>(false);
 
 	const createRoomClickHandler = () => {
 		if (!newRoomInput.showingInput) {
@@ -145,42 +191,7 @@ const RoomList: FunctionComponent<{
 			) : (
 				<List>
 					{rooms.map((room, index) => (
-						<ListItem key={index}>
-							{room.currentGame.hasValue ? (
-								<ListItemAvatar>
-									<Avatar src={gameIconURLs[room.currentGame.value]} />
-								</ListItemAvatar>
-							) : null}
-							<ListItemText
-								inset={!room.currentGame.hasValue}
-								primary={room.name}
-								secondary={`${pipe(
-									Maybe.map<GameType, string>(
-										name => `Currently playing: ${gameNames[name]} :: `
-									),
-									Maybe.orSome('')
-								)(room.currentGame)}${room.participantCount} player${
-									room.participantCount !== 1 ? 's' : ''
-								}${room.needsPassword ? ' (Requires password)' : ''}`}
-							/>
-							<ListItemSecondaryAction>
-								<Button
-									variant="contained"
-									aria-label="join"
-									onClick={() =>
-										room.needsPassword
-											? setPasswordInput({
-													showingInput: true,
-													input: '',
-													targetRoomID: room.id,
-											  })
-											: joinRoom(socket, room.id, '')
-									}
-								>
-									Join
-								</Button>
-							</ListItemSecondaryAction>
-						</ListItem>
+						<ShowRoom room={room} onJoinClick={() => void 0} key={index} />
 					))}
 				</List>
 			)}
@@ -249,7 +260,6 @@ const RoomList: FunctionComponent<{
 									className={styles.margin}
 									color="primary"
 									variant="contained"
-									disabled={disabled}
 									onClick={createRoomClickHandler}
 								>
 									Submit
@@ -302,7 +312,6 @@ const RoomList: FunctionComponent<{
 									className={styles.margin}
 									color="primary"
 									variant="contained"
-									disabled={disabled}
 									onClick={joinRoomClickHandler}
 								>
 									Submit

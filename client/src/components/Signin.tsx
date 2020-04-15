@@ -33,6 +33,9 @@ export const Signin: FunctionComponent<{
 		loginUser(socket, name, email);
 	};
 
+	const nameBoxIsEmpty = name.trim() === '';
+	const functionallyDisabled = disabled || nameBoxIsEmpty;
+
 	return (
 		<Grid
 			container={true}
@@ -63,7 +66,7 @@ export const Signin: FunctionComponent<{
 					className={classes.margin}
 					color="primary"
 					variant="contained"
-					disabled={disabled}
+					disabled={functionallyDisabled}
 					onClick={signin}
 				>
 					Submit

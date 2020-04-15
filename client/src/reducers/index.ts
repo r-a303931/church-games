@@ -9,7 +9,10 @@ const defaultState: ClientState = {
 	error: Maybe.none(),
 };
 
-export default (state: ClientState = defaultState, action: ClientActions): ClientState => {
+export default (dateFunction: () => number) => (
+	state: ClientState = defaultState,
+	action: ClientActions
+): ClientState => {
 	switch (action.type) {
 		case 'LOAD_ROOMS':
 			return {
@@ -44,7 +47,7 @@ export default (state: ClientState = defaultState, action: ClientActions): Clien
 
 			return {
 				...state,
-				game: reducer(unoReducer)(state.game, action.action),
+				game: reducer(dateFunction)(unoReducer)(state.game, action.action),
 			};
 
 		case 'UPDATE_ROOMS':

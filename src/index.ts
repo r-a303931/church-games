@@ -1,11 +1,28 @@
-import { Game, GameType, Maybe, MaybeObj, RoomParticipant, SmallRoom, Room } from 'common';
+import {
+	Actions,
+	Maybe,
+	MaybeObj,
+	NewChatAction,
+	Room,
+	RoomJoinAction,
+	RoomLeaveAction,
+	RoomParticipant,
+	SmallRoom,
+} from 'common';
 import * as express from 'express';
 import { createServer } from 'http';
 import { join } from 'path';
 import * as io from 'socket.io';
 import { v4 } from 'uuid';
-import { addParticipant, createRoom, joinRoom, removeParticipant, leaveRoom } from './actions';
-import createStore, { ServerState, ServerRoomParticipant } from './createStore';
+import {
+	addParticipant,
+	createRoom,
+	joinRoom,
+	leaveRoom,
+	removeParticipant,
+	RoomAction,
+} from './actions';
+import createStore, { ServerRoomParticipant, ServerState } from './createStore';
 import participantRoom from './lib/participantRoom';
 
 const app: express.Application = express();
@@ -36,12 +53,12 @@ const sockets: { [key: string]: SocketIO.Socket } = {};
 const store = createStore(websocketServer, sockets);
 
 export const getSmallRooms = (state: ServerState | undefined): SmallRoom[] =>
-	Object.values(state?.rooms ?? []).map(({ currentGame, id, name, password, participants }) => ({
-		currentGame: Maybe.map<Game, GameType>(game => game.type)(currentGame),
-		id,
-		name,
-		needsPassword: password.hasValue,
-		participantCount: participants.length,
+	Object.values(state?.rooms ?? []).map(room => ({
+		currentGame: room.hasGame ? Maybe.some(room.currentGame.type) : Maybe.none(),
+		id: room.id,
+		name: room.name,
+		needsPassword: room.password.hasValue,
+		participantCount: room.participants.length,
 	}));
 
 websocketServer.on('connect', socket => {
@@ -97,6 +114,31 @@ websocketServer.on('connect', socket => {
 				store.dispatch(removeParticipant(participant));
 				store.dispatch(leaveRoom(participant));
 			});
+
+			socket.on(
+				'action',
+				(
+					action:
+						| Exclude<Actions, NewChatAction | RoomJoinAction | RoomLeaveAction>
+						| { type: 'NEW_CHAT'; message: string }
+				) => {
+					const state = store.getState();
+					const room = participantRoom(state)(participant.id);
+
+					if (room.hasValue) {
+						const newAction: Actions =
+							action.type === 'NEW_CHAT' ? { ...action, participant } : action;
+
+						const roomAction: RoomAction = {
+							action: newAction,
+							roomID: room.value.id,
+							type: 'ROOM_ACTION',
+						};
+
+						store.dispatch(roomAction);
+					}
+				}
+			);
 
 			ack(getSmallRooms(store.getState()), {
 				email,

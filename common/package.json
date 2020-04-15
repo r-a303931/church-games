@@ -4,15 +4,18 @@
 	"description": "Contains common code between the server and client",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "tsc",
+		"test": "jest",
+		"build": "tsc --project tsconfig.build.json",
 		"lint": "tslint --project ."
 	},
 	"author": "Andrew Rioux",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/jest": "^25.2.1",
 		"@types/ramda": "^0.27.3",
+		"jest": "^25.3.0",
 		"prettier": "^2.0.4",
+		"ts-jest": "^25.3.1",
 		"tslint": "^6.1.1",
 		"tslint-config-prettier": "^1.18.0",
 		"typescript": "^3.8.3"
@@ -20,5 +23,26 @@
 	"dependencies": {
 		"ramda": "^0.27.0",
 		"redux": "^4.0.5"
+	},
+	"jest": {
+		"globals": {
+			"ts-jest": {
+				"tsConfig": "tsconfig.test.json",
+				"diagnostics": false
+			}
+		},
+		"testRegex": "(/src/.*\\.(test|spec)\\.tsx?$)",
+		"testPathIgnorePatterns": [
+			"/node_modules/"
+		],
+		"transform": {
+			"^.+\\.tsx?$": "ts-jest"
+		},
+		"moduleFileExtensions": [
+			"ts",
+			"js",
+			"json",
+			"node"
+		]
 	}
 }

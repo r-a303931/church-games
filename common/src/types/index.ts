@@ -52,11 +52,7 @@ export interface ChatItem {
 	senderID: string;
 }
 
-/**
- * This interface is generic so that the server can use a different RoomParticipant type which
- * includes a socket
- */
-export interface Room<RoomParticipantType extends RoomParticipant = RoomParticipant> {
+export interface GameRoom {
 	/**
 	 * Used for addressing
 	 */
@@ -73,9 +69,14 @@ export interface Room<RoomParticipantType extends RoomParticipant = RoomParticip
 	password: MaybeObj<string>;
 
 	/**
+	 * The room has started the game
+	 */
+	hasGame: true;
+
+	/**
 	 * Used to represent the current game
 	 */
-	currentGame: MaybeObj<Game>;
+	currentGame: Game;
 
 	/**
 	 * Contains the chat log
@@ -85,8 +86,47 @@ export interface Room<RoomParticipantType extends RoomParticipant = RoomParticip
 	/**
 	 * The room participants, who can all chat
 	 */
-	participants: RoomParticipantType[];
+	participants: RoomParticipant[];
 }
+
+export interface WaitingRoom {
+	/**
+	 * Used for addressing
+	 */
+	id: string;
+
+	/**
+	 * What to call the room and display as
+	 */
+	name: string;
+
+	/**
+	 * Necessary if the room participants want a password
+	 */
+	password: MaybeObj<string>;
+
+	/**
+	 * The room has started the game
+	 */
+	hasGame: false;
+
+	/**
+	 * Used to represent the current game
+	 */
+	playerIDs: string[];
+
+	/**
+	 * Contains the chat log
+	 */
+	chat: ChatItem[];
+
+	/**
+	 * The room participants, who can all chat
+	 */
+	participants: RoomParticipant[];
+}
+
+export type Room = WaitingRoom | GameRoom;
 
 /**
  * A more secure object than Room to send

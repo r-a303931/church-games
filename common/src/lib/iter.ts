@@ -5,14 +5,28 @@ export const matchByProp = <T, K extends keyof T = keyof T>(prop: K) => (value1:
 export const matchByName = matchByProp<{ name: string }>('name');
 
 export const iterMap = <T, U>(map: (v: T) => U) =>
-	function* (iter: IterableIterator<T>) {
+	function* (iter: Iterable<T>) {
 		for (const i of iter) {
 			yield map(i);
 		}
 	};
 
+export const take = (howMany: number) => <T>(iter: Iterable<T>): T[] => {
+	const returnValue: T[] = [];
+
+	for (const value of iter) {
+		if (returnValue.length >= howMany) {
+			return returnValue;
+		}
+
+		returnValue.push(value);
+	}
+
+	return returnValue;
+};
+
 export const iterFilter = <T, S extends T>(filter: (v: T) => v is S) =>
-	function* (iter: IterableIterator<T>) {
+	function* (iter: Iterable<T>) {
 		for (const i of iter) {
 			if (filter(i)) {
 				yield i;
@@ -21,7 +35,7 @@ export const iterFilter = <T, S extends T>(filter: (v: T) => v is S) =>
 	};
 
 export const iterReduce = <T, U>(reducer: (prev: U, curr: T) => U) => (initialValue: U) => (
-	iter: IterableIterator<T>
+	iter: Iterable<T>
 ) => {
 	let value = initialValue;
 
@@ -33,7 +47,7 @@ export const iterReduce = <T, U>(reducer: (prev: U, curr: T) => U) => (initialVa
 };
 
 export const iterFind = <T, S extends T>(predicate: (v: T) => v is S) => (
-	iter: IterableIterator<T>
+	iter: Iterable<T>
 ): S | undefined => {
 	for (const i of iter) {
 		if (predicate(i)) {
@@ -42,7 +56,7 @@ export const iterFind = <T, S extends T>(predicate: (v: T) => v is S) => (
 	}
 };
 
-export const iterIncludes = <T>(value: T) => (iter: IterableIterator<T>) => {
+export const iterIncludes = <T>(value: T) => (iter: Iterable<T>) => {
 	for (const i of iter) {
 		if (value === i) {
 			return true;

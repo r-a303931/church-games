@@ -1,9 +1,10 @@
-import { Room, RoomParticipant } from 'common';
+import { Room, RoomParticipant, PseudoRandom } from 'common';
 import { applyMiddleware, createStore, Store } from 'redux';
 import * as io from 'socket.io';
 import { ServerActions } from './actions';
 import syncStateMiddleware from './lib/syncStateMiddleware';
-import reducers from './reducers';
+import reducers, { defaultState } from './reducers';
+import { createLogger } from 'redux-logger';
 
 export type ServerRoomParticipant = RoomParticipant;
 /**
@@ -27,9 +28,12 @@ export type ServerStore = Store<ServerState, ServerActions>;
 
 export default (websocketServer: io.Server, sockets: { [key: string]: io.Socket }): ServerStore => {
 	const store = createStore(
-		reducers,
-		{ rooms: {}, members: {} },
-		applyMiddleware(/*createLogger({}), */ syncStateMiddleware(websocketServer, sockets))
+		reducers(Date.now)(new PseudoRandom()),
+		defaultState,
+		applyMiddleware(
+			createLogger({ colors: false }),
+			syncStateMiddleware(websocketServer, sockets)
+		)
 	);
 
 	store.dispatch({ type: 'INIT' });

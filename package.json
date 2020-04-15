@@ -5,7 +5,8 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "tsc",
-		"pretty": "prettier --write ."
+		"pretty": "prettier --write .",
+		"test": "jest"
 	},
 	"author": "Andrew Rioux",
 	"license": "MIT",
@@ -15,7 +16,9 @@
 		"@types/redux-logger": "^3.0.7",
 		"@types/socket.io": "^2.1.4",
 		"@types/uuid": "^7.0.2",
+		"jest": "^25.3.0",
 		"prettier": "^2.0.4",
+		"ts-jest": "^25.3.1",
 		"tslint": "^6.1.1",
 		"tslint-config-prettier": "^1.18.0",
 		"typescript": "^3.8.3"
@@ -28,5 +31,26 @@
 		"redux-logger": "^3.0.6",
 		"socket.io": "^2.3.0",
 		"uuid": "^7.0.3"
+	},
+	"jest": {
+		"globals": {
+			"ts-jest": {
+				"tsConfig": "tsconfig.test.json",
+				"diagnostics": false
+			}
+		},
+		"testRegex": "(/src/.*\\.(test|spec)\\.tsx?$)",
+		"testPathIgnorePatterns": [
+			"/node_modules/"
+		],
+		"transform": {
+			"^.+\\.tsx$": "ts-jest"
+		},
+		"moduleFileExtensions": [
+			"ts",
+			"js",
+			"json",
+			"node"
+		]
 	}
 }
