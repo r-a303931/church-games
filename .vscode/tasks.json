@@ -5,7 +5,9 @@
 			"type": "typescript",
 			"tsconfig": "tsconfig.build.json",
 			"option": "watch",
-			"problemMatcher": ["$tsc-watch"],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
 			"group": "build",
 			"label": "Watch server"
 		},
@@ -13,7 +15,9 @@
 			"type": "typescript",
 			"tsconfig": "common/tsconfig.build.json",
 			"option": "watch",
-			"problemMatcher": ["$tsc-watch"],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
 			"group": "build",
 			"label": "Watch common"
 		},
@@ -29,13 +33,21 @@
 			"type": "typescript",
 			"tsconfig": "client/tsconfig.json",
 			"option": "watch",
-			"problemMatcher": ["$tsc-watch"],
+			"problemMatcher": [
+				"$tsc-watch"
+			],
 			"group": "build",
 			"label": "Watch client"
 		},
 		{
 			"label": "Build and watch all",
-			"dependsOn": ["Watch server", "Watch common", "Webpack client", "Watch client"]
+			"dependsOn": [
+				"Watch server",
+				"Watch common",
+				"Webpack client",
+				"Watch client"
+			],
+			"problemMatcher": []
 		}
 	]
 }

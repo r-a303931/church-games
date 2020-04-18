@@ -28,6 +28,19 @@ export default (dateFunction: () => number) => (randomFunction: Random) => {
 
 				const newRoom = reducer(dateFunction)(unoReducer)(room, action.action);
 
+				console.log(newRoom.participants.length);
+
+				if (newRoom.participants.length === 0) {
+					const rooms = Object.assign({}, state.rooms);
+
+					delete rooms[room.id];
+
+					return {
+						...state,
+						rooms,
+					};
+				}
+
 				return {
 					...state,
 					rooms: {

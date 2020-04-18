@@ -32,6 +32,7 @@ export default (dateFunction: () => number) => (
 				game: action.room,
 				error: Maybe.none(),
 				me: state.me,
+				rooms: state.rooms,
 			};
 
 		case 'ERROR':
@@ -45,13 +46,26 @@ export default (dateFunction: () => number) => (
 				return state;
 			}
 
+			if (
+				action.action.type === 'LEAVE_ROOM' &&
+				action.action.participant.id === state.me.id
+			) {
+				return {
+					state: 'LOADED_MAIN',
+					error: Maybe.none(),
+					me: state.me,
+					rooms: state.rooms,
+				};
+			}
+
 			return {
 				...state,
 				game: reducer(dateFunction)(unoReducer)(state.game, action.action),
 			};
 
 		case 'UPDATE_ROOMS':
-			if (state.state !== 'LOADED_MAIN') {
+			if (state.state === 'UNLOADED') {
+				// Can't say we are loaded, as we don't have participant information
 				return state;
 			}
 
@@ -59,5 +73,21 @@ export default (dateFunction: () => number) => (
 				...state,
 				rooms: action.rooms,
 			};
+
+		case 'LEAVE_ROOM': {
+			if (state.state === 'UNLOADED') {
+				return {
+					state: state.state,
+					error: Maybe.none(),
+				};
+			}
+
+			return {
+				state: 'LOADED_MAIN',
+				error: Maybe.none(),
+				me: state.me,
+				rooms: state.rooms,
+			};
+		}
 	}
 };

@@ -1,6 +1,22 @@
-import { Actions, Maybe, MaybeObj, Room, SmallRoom, RoomParticipant } from 'common';
+import {
+	Actions,
+	Maybe,
+	MaybeObj,
+	Room,
+	SmallRoom,
+	RoomParticipant,
+	SelfActions,
+	SelfRoomLeaveAction,
+} from 'common';
 import { Dispatch } from 'react';
 import { Action } from 'redux';
+
+export const emitAction = (socket: SocketIOClient.Socket) => (
+	action: SelfActions,
+	done?: () => void
+) => {
+	socket.emit('action', action, done);
+};
 
 export interface ErrorAction extends Action<'ERROR'> {
 	error: string;
@@ -83,10 +99,19 @@ export const createRoom = (socket: SocketIOClient.Socket, id: string, password: 
 	);
 };
 
+export const leaveRoom = (socket: SocketIOClient.Socket) => (dispatch: Dispatch<ClientActions>) => {
+	emitAction(socket)({ type: 'LEAVE_ROOM' }, () => {
+		console.log('dispatching');
+		dispatch({
+			type: 'LEAVE_ROOM',
+		});
+	});
+};
+
 export const sendChatMessage = (socket: SocketIOClient.Socket, message: string) => (
 	dispatchEvent: Dispatch<ClientActions>
 ) => {
-	socket.emit('action', { type: 'NEW_CHAT', message });
+	emitAction(socket)({ type: 'NEW_CHAT', message });
 };
 //#endregion
 
@@ -95,4 +120,5 @@ export type ClientActions =
 	| UpdateRoomsAction
 	| LoadRoomsAction
 	| LoadRoomAction
+	| SelfRoomLeaveAction
 	| RoomAction;

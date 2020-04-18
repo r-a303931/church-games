@@ -1,10 +1,11 @@
-import { Actions, GameType, Room, RoomParticipant } from 'common';
+import { Actions, GameType, Room, RoomParticipant, Maybe } from 'common';
 import { Middleware } from 'redux';
 import { Server, Socket } from 'socket.io';
 import { getSmallRooms } from '..';
 import { ServerActions } from '../actions';
 import { ServerState } from '../createStore';
 import secureGameForMember from './secureGameForMember';
+import participantRoom from './participantRoom';
 
 export type ActionGenerator = (participant: RoomParticipant) => Actions;
 
@@ -29,26 +30,46 @@ export default (
 	const dispatchToRoomForSockets = dispatchToRoom(sockets);
 
 	switch (action.type) {
-		case 'PARTICIPANT_DISCONNECT':
 		case 'JOIN_ROOM':
 		case 'LEAVE_ROOM':
 		case 'CREATE_ROOM': {
+			let room = Maybe.none<Room>();
+			if (action.type === 'LEAVE_ROOM') {
+				room = participantRoom(store.getState())(action.participant.id);
+			}
+
 			next(action);
 
+			if (action.type === 'JOIN_ROOM') {
+				room = participantRoom(store.getState())(action.participant.id);
+			}
+
 			mainServer.emit('roomsUpdate', getSmallRooms(store.getState()));
+
+			if (room.hasValue) {
+				const dispatcher = dispatchToRoomForSockets(room.value);
+
+				if (action.type === 'LEAVE_ROOM' || action.type === 'JOIN_ROOM') {
+					dispatcher(action);
+				}
+			}
 
 			break;
 		}
 
 		case 'ROOM_ACTION': {
+			const roomBefore = store.getState().rooms[action.roomID];
+
 			next(action);
 
-			const room = store.getState().rooms[action.roomID];
+			const roomAfter = store.getState().rooms[action.roomID];
 
-			if (room) {
-				const dispatcher = dispatchToRoomForSockets(room);
+			if (roomBefore) {
+				console.log('running');
+				console.log(action.action);
 
-				if (action.action.type === 'GAME_ACTION' && room.hasGame) {
+				if (action.action.type === 'GAME_ACTION' && roomAfter.hasGame) {
+					const dispatcher = dispatchToRoomForSockets(roomAfter);
 					if (
 						action.action.gameType === GameType.UNO &&
 						action.action.gameAction.type === 'INIT'
@@ -57,14 +78,20 @@ export default (
 							type: 'GAME_ACTION',
 							gameAction: {
 								type: 'INIT_DONE',
-								readyGame: secureGameForMember(room.currentGame, participant),
+								readyGame: secureGameForMember(roomAfter.currentGame, participant),
 							},
 							gameType: GameType.UNO,
+							participant,
 						}));
 					} else {
 						dispatcher(action.action);
 					}
+				} else if (action.action.type === 'LEAVE_ROOM') {
+					const dispatcher = dispatchToRoomForSockets(roomBefore);
+					dispatcher(action.action);
+					mainServer.emit('roomsUpdate', getSmallRooms(store.getState()));
 				} else {
+					const dispatcher = dispatchToRoomForSockets(roomAfter);
 					dispatcher(action.action);
 				}
 			}

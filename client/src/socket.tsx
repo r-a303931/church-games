@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { ComponentType, FC } from 'react';
 import io from 'socket.io-client';
 import { createContext } from 'vm';
 
@@ -10,8 +10,8 @@ export const socket = io({
 const { Consumer: SocketConsumer, Provider: SocketProvider } = createContext(socket);
 export { SocketConsumer, SocketProvider };
 
-export const withSocket = <T, _>(
-	Component: FunctionComponent<T & { socket: SocketIOClient.Socket }>
-): FunctionComponent<Exclude<T, 'socket'>> => (props: T) => (
-	<Component {...props} socket={socket} />
+export const withSocket = <P extends object>(
+	Component: ComponentType<P & { socket: SocketIOClient.Socket }>
+): FC<Omit<P, 'socket'>> => props => (
+	<Component {...({ ...props, socket } as P & { socket: SocketIOClient.Socket })} />
 );

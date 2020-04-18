@@ -23,6 +23,9 @@ export interface ClientInRoom extends ClientStateBase {
 	state: 'IN_GAME';
 	game: Room;
 	me: RoomParticipant;
+
+	// Used so that when the room is left, there is a screen to go to
+	rooms: SmallRoom[];
 }
 
 export type ClientStateType = 'IN_GAME' | 'LOADED_MAIN' | 'UNLOADED';

@@ -2,23 +2,17 @@ import { Action } from 'redux';
 import { UnoActions } from './uno';
 import { GameType, RoomParticipant } from '../types';
 
-export interface UnoAction extends Action<'GAME_ACTION'> {
-	gameType: GameType;
+export interface SelfUnoAction extends Action<'GAME_ACTION'> {
+	gameType: GameType.UNO;
 
 	gameAction: UnoActions;
 }
 
-export interface RoomJoinAction extends Action<'JOIN_ROOM'> {
-	participant: RoomParticipant;
-}
+export type SelfRoomJoinAction = Action<'JOIN_ROOM'>;
 
-export interface RoomLeaveAction extends Action<'LEAVE_ROOM'> {
-	participant: RoomParticipant;
-}
+export type SelfRoomLeaveAction = Action<'LEAVE_ROOM'>;
 
-export interface NewChatAction extends Action<'NEW_CHAT'> {
-	participant: RoomParticipant;
-
+export interface SelfNewChatAction extends Action<'NEW_CHAT'> {
 	message: string;
 }
 
@@ -38,4 +32,12 @@ export const sendChat = (participant: RoomParticipant) => (message: string): Act
 	participant,
 });
 
-export type Actions = NewChatAction | RoomLeaveAction | RoomJoinAction | UnoAction;
+export type OtherPlayerAction<T extends SelfActions> = T & { participant: RoomParticipant };
+
+export type Actions = OtherPlayerAction<SelfActions>;
+
+export type SelfActions =
+	| SelfNewChatAction
+	| SelfRoomLeaveAction
+	| SelfRoomJoinAction
+	| SelfUnoAction;

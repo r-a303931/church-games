@@ -1,5 +1,5 @@
 import { Button, Grid, makeStyles, TextField, FormGroup } from '@material-ui/core';
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { login } from '../actions';
 import { withSocket } from '../socket';
@@ -21,9 +21,16 @@ export const Signin: FunctionComponent<{
 	socket: SocketIOClient.Socket;
 	login: (socket: SocketIOClient.Socket, name: string, email: string) => void;
 }> = ({ login: loginUser, socket }) => {
-	const [name, setName] = useState('');
-	const [email, setEmail] = useState('');
+	const [name, setName] = useState(() => window.localStorage.getItem('name') ?? '');
+	const [email, setEmail] = useState(() => window.localStorage.getItem('email') ?? '');
 	const [disabled, setDisabled] = useState(false);
+
+	useEffect(() => {
+		window.localStorage.setItem('name', name);
+	}, [name]);
+	useEffect(() => {
+		window.localStorage.setItem('email', email);
+	}, [email]);
 
 	const classes = useStyles();
 

@@ -1,14 +1,4 @@
-import {
-	Actions,
-	Maybe,
-	MaybeObj,
-	NewChatAction,
-	Room,
-	RoomJoinAction,
-	RoomLeaveAction,
-	RoomParticipant,
-	SmallRoom,
-} from 'common';
+import { Actions, Maybe, MaybeObj, Room, RoomParticipant, SelfActions, SmallRoom } from 'common';
 import * as express from 'express';
 import { createServer } from 'http';
 import { join } from 'path';
@@ -88,8 +78,7 @@ websocketServer.on('connect', socket => {
 					store.dispatch(joinRoom(participant)(id, password));
 
 					const state = store.getState();
-					const returnValue = participantRoom(state)(participant.id);
-					ackJoin(returnValue);
+					ackJoin(participantRoom(state)(participant.id));
 				}
 			);
 
@@ -103,8 +92,7 @@ websocketServer.on('connect', socket => {
 					store.dispatch(createRoom(participant)(roomName, password));
 
 					const state = store.getState();
-					const returnValue = participantRoom(state)(participant.id);
-					ackCreate(returnValue);
+					ackCreate(participantRoom(state)(participant.id));
 				}
 			);
 
@@ -115,30 +103,24 @@ websocketServer.on('connect', socket => {
 				store.dispatch(leaveRoom(participant));
 			});
 
-			socket.on(
-				'action',
-				(
-					action:
-						| Exclude<Actions, NewChatAction | RoomJoinAction | RoomLeaveAction>
-						| { type: 'NEW_CHAT'; message: string }
-				) => {
-					const state = store.getState();
-					const room = participantRoom(state)(participant.id);
+			socket.on('action', (action: SelfActions, done: () => void) => {
+				const state = store.getState();
+				const room = participantRoom(state)(participant.id);
 
-					if (room.hasValue) {
-						const newAction: Actions =
-							action.type === 'NEW_CHAT' ? { ...action, participant } : action;
+				if (room.hasValue) {
+					const newAction: Actions = { ...action, participant };
 
-						const roomAction: RoomAction = {
-							action: newAction,
-							roomID: room.value.id,
-							type: 'ROOM_ACTION',
-						};
+					const roomAction: RoomAction = {
+						action: newAction,
+						roomID: room.value.id,
+						type: 'ROOM_ACTION',
+					};
 
-						store.dispatch(roomAction);
-					}
+					store.dispatch(roomAction);
 				}
-			);
+
+				done?.();
+			});
 
 			ack(getSmallRooms(store.getState()), {
 				email,
