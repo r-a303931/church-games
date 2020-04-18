@@ -22,7 +22,7 @@ import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
 import { createRoom as createRoomAction, joinRoom as joinRoomAction } from '../actions';
 import { ClientLoaded, ThunkDispatcher } from '../createStore';
-import { withSocket } from '../socket';
+import { withSocket, FullConvertedProps } from '../socket';
 import unoIcon from './gameicons/uno.png';
 
 interface PasswordInputShownState {
@@ -156,13 +156,17 @@ export const ShowRoom: FunctionComponent<{
 // 	return null;
 // };
 
-export const RoomList: FunctionComponent<{
+interface RoomListProps {
 	rooms: SmallRoom[];
-	socket: SocketIOClient.Socket;
 	error: MaybeObj<string>;
 	createRoom: (socket: SocketIOClient.Socket, name: string, password: string) => void;
 	joinRoom: (socket: SocketIOClient.Socket, id: string, password: string) => void;
-}> = ({ socket, rooms, createRoom, joinRoom, error }) => {
+}
+
+export const RoomList: FunctionComponent<FullConvertedProps<
+	RoomListProps,
+	'joinRoom' | 'createRoom'
+>> = ({ rooms, createRoom, joinRoom, error }) => {
 	const styles = useStyles();
 
 	const [passwordInput, setPasswordInput] = useState<PasswordInputState>({ showingInput: false });
@@ -173,7 +177,7 @@ export const RoomList: FunctionComponent<{
 			return;
 		}
 
-		createRoom(socket, newRoomInput.name, newRoomInput.password);
+		createRoom(newRoomInput.name, newRoomInput.password);
 	};
 
 	const joinRoomClickHandler = () => {
@@ -181,7 +185,7 @@ export const RoomList: FunctionComponent<{
 			return;
 		}
 
-		joinRoom(socket, passwordInput.targetRoomID, passwordInput.input);
+		joinRoom(passwordInput.targetRoomID, passwordInput.input);
 	};
 
 	return (
@@ -199,7 +203,7 @@ export const RoomList: FunctionComponent<{
 							room={room}
 							onJoinClick={() =>
 								!room.needsPassword
-									? joinRoom(socket, room.id, '')
+									? joinRoom(room.id, '')
 									: setPasswordInput({
 											showingInput: true,
 											input: '',
@@ -254,6 +258,7 @@ export const RoomList: FunctionComponent<{
 									}
 									value={newRoomInput.showingInput ? newRoomInput.name : ''}
 									required={true}
+									autoFocus
 									label="Room Name"
 									variant="outlined"
 									className={styles.marginBottom}
@@ -323,6 +328,7 @@ export const RoomList: FunctionComponent<{
 									type="password"
 									error={Maybe.isSome(error)}
 									helperText={Maybe.orSome('')(error)}
+									autoFocus
 								/>
 								<Button
 									className={styles.margin}
@@ -341,4 +347,4 @@ export const RoomList: FunctionComponent<{
 	);
 };
 
-export default withSocket(connect(mapState, dispatchProps)(RoomList));
+export default connect(mapState, dispatchProps)(withSocket(RoomList, 'createRoom', 'joinRoom'));

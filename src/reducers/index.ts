@@ -88,6 +88,7 @@ export default (dateFunction: () => number) => (randomFunction: Random) => {
 							password,
 							hasGame: false,
 							playerIDs: [],
+							gameSelection: Maybe.none(),
 						},
 					},
 				};

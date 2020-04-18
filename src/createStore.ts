@@ -1,4 +1,4 @@
-import { Room, RoomParticipant, PseudoRandom } from 'common';
+import { PseudoRandom, Room, RoomParticipant } from 'common';
 import { applyMiddleware, createStore, Store } from 'redux';
 import * as io from 'socket.io';
 import { ServerActions } from './actions';

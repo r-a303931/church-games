@@ -18,5 +18,6 @@ export default (room: Room): Room => ({
 		: {
 				hasGame: false,
 				playerIDs: room.playerIDs,
+				gameSelection: room.gameSelection,
 		  }),
 });

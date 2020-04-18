@@ -7,12 +7,14 @@ import {
 	RoomParticipant,
 	SelfActions,
 	SelfRoomLeaveAction,
+	GameType,
+	SelectGameTypeAction,
 } from 'common';
 import { Dispatch } from 'react';
 import { Action } from 'redux';
 
 export const emitAction = (socket: SocketIOClient.Socket) => (
-	action: SelfActions,
+	action: SelfActions | SelectGameTypeAction,
 	done?: () => void
 ) => {
 	socket.emit('action', action, done);
@@ -112,6 +114,12 @@ export const sendChatMessage = (socket: SocketIOClient.Socket, message: string) 
 	dispatchEvent: Dispatch<ClientActions>
 ) => {
 	emitAction(socket)({ type: 'NEW_CHAT', message });
+};
+
+export const selectGame = (socket: SocketIOClient.Socket, gameType: GameType) => (
+	dispatchEvent: Dispatch<ClientActions>
+) => {
+	emitAction(socket)({ type: 'SELECT_GAME_TYPE', gameType });
 };
 //#endregion
 

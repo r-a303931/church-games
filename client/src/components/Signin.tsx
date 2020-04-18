@@ -2,7 +2,7 @@ import { Button, Grid, makeStyles, TextField, FormGroup } from '@material-ui/cor
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { login } from '../actions';
-import { withSocket } from '../socket';
+import { withSocket, FullConvertedProps } from '../socket';
 
 const useStyles = makeStyles(theme => ({
 	margin: {
@@ -17,10 +17,13 @@ const mapDispatch = {
 	login,
 };
 
-export const Signin: FunctionComponent<{
-	socket: SocketIOClient.Socket;
+interface SigninProps {
 	login: (socket: SocketIOClient.Socket, name: string, email: string) => void;
-}> = ({ login: loginUser, socket }) => {
+}
+
+export const Signin: FunctionComponent<FullConvertedProps<SigninProps, 'login'>> = ({
+	login: loginUser,
+}) => {
 	const [name, setName] = useState(() => window.localStorage.getItem('name') ?? '');
 	const [email, setEmail] = useState(() => window.localStorage.getItem('email') ?? '');
 	const [disabled, setDisabled] = useState(false);
@@ -37,7 +40,7 @@ export const Signin: FunctionComponent<{
 	const signin = () => {
 		setDisabled(true);
 
-		loginUser(socket, name, email);
+		loginUser(name, email);
 	};
 
 	const nameBoxIsEmpty = name.trim() === '';
@@ -83,4 +86,4 @@ export const Signin: FunctionComponent<{
 	);
 };
 
-export default withSocket(connect(undefined, mapDispatch)(Signin));
+export default connect(undefined, mapDispatch)(withSocket(Signin, 'login'));

@@ -26,8 +26,8 @@ import React, { FunctionComponent, useState } from 'react';
 import { connect } from 'react-redux';
 import { leaveRoom as leaveRoomAction, sendChatMessage as sendChatMessageAction } from '../actions';
 import { ClientInRoom, ThunkDispatcher } from '../createStore';
-import { Game } from '../games/Game';
-import { withSocket } from '../socket';
+import Game from '../games/Game';
+import { withSocket, FullConvertedProps } from '../socket';
 
 const mapStateToProps = (state: ClientInRoom) => ({
 	chat: state.game.chat,
@@ -51,6 +51,7 @@ const drawerWidth = 360;
 const useStyles = makeStyles(theme => ({
 	root: {
 		display: 'flex',
+		height: '100%',
 	},
 	appBar: {
 		transition: theme.transitions.create(['margin', 'width'], {
@@ -92,12 +93,13 @@ const useStyles = makeStyles(theme => ({
 	},
 	content: {
 		flexGrow: 1,
-		padding: theme.spacing(3),
+		padding: 0,
 		transition: theme.transitions.create('margin', {
 			easing: theme.transitions.easing.sharp,
 			duration: theme.transitions.duration.leavingScreen,
 		}),
 		marginRight: -drawerWidth,
+		height: '100%',
 	},
 	contentShift: {
 		transition: theme.transitions.create('margin', {
@@ -246,17 +248,21 @@ const groupChatItems = (chatItems: ChatItem[]) => {
 	return returnValue;
 };
 
-export const ChatInput: FunctionComponent<{
-	socket: SocketIOClient.Socket;
+interface ChatInputProps {
 	styles: ReturnType<ReturnType<typeof makeStyles>>;
 	sendChatMessage: (socket: SocketIOClient.Socket, message: string) => void;
-}> = ({ sendChatMessage, socket, styles }) => {
+}
+
+export const ChatInput: FunctionComponent<FullConvertedProps<
+	ChatInputProps,
+	'sendChatMessage'
+>> = ({ sendChatMessage, styles }) => {
 	const [inputText, setInputText] = useState<string>('');
 
 	const disabled = inputText === '';
 
 	const sendMessage = () => {
-		sendChatMessage(socket, inputText);
+		sendChatMessage(inputText);
 		setInputText('');
 	};
 
@@ -274,6 +280,7 @@ export const ChatInput: FunctionComponent<{
 						}
 					}
 				}}
+				autoFocus
 			/>
 			<IconButton
 				className={styles.panelSendButton}
@@ -286,24 +293,26 @@ export const ChatInput: FunctionComponent<{
 	);
 };
 
-const ConnectedChatInput = withSocket(
-	connect(undefined, (dispatch: ThunkDispatcher) => ({
-		sendChatMessage(socket: SocketIOClient.Socket, message: string) {
-			dispatch(sendChatMessageAction(socket, message));
-		},
-	}))(ChatInput)
-);
+const ConnectedChatInput = connect(undefined, (dispatch: ThunkDispatcher) => ({
+	sendChatMessage(socket: SocketIOClient.Socket, message: string) {
+		dispatch(sendChatMessageAction(socket, message));
+	},
+}))(withSocket(ChatInput, 'sendChatMessage'));
 
-export const RoomRender: FunctionComponent<{
+interface RoomRenderProps {
 	chat: ChatItem[];
-	socket: SocketIOClient.Socket;
 	name: string;
 	me: RoomParticipant;
 	participants: RoomParticipant[];
 	hasGame: boolean;
 	sendChatMessage: (socket: SocketIOClient.Socket, message: string) => void;
 	leaveRoom: (socket: SocketIOClient.Socket) => void;
-}> = ({ me, chat, name, participants, hasGame, socket, sendChatMessage, leaveRoom }) => {
+}
+
+export const RoomRender: FunctionComponent<FullConvertedProps<
+	RoomRenderProps,
+	'sendChatMessage' | 'leaveRoom'
+>> = ({ me, chat, name, participants, hasGame, socket, sendChatMessage, leaveRoom }) => {
 	const styles = useStyles();
 	const theme = useTheme();
 	const [drawerIsOpen, setDrawerIsOpen] = useState<boolean>(true);
@@ -312,7 +321,7 @@ export const RoomRender: FunctionComponent<{
 
 	const handleDrawerClose = () => setDrawerIsOpen(false);
 
-	const handleLeaveRoom = () => leaveRoom(socket);
+	const handleLeaveRoom = () => leaveRoom();
 
 	const participantRenderer = RenderParticipant(styles.marginLeft);
 	const chatRenderer = RenderChatItems(styles)(participants)(me);
@@ -346,6 +355,7 @@ export const RoomRender: FunctionComponent<{
 					[styles.contentShift]: drawerIsOpen,
 				})}
 			>
+				<div className={styles.drawerHeader} />
 				<Game />
 			</main>
 			<Drawer
@@ -388,4 +398,7 @@ export const RoomRender: FunctionComponent<{
 	);
 };
 
-export default withSocket(connect(mapStateToProps, mapDispatchToProps)(RoomRender));
+export default connect(
+	mapStateToProps,
+	mapDispatchToProps
+)(withSocket(RoomRender, 'leaveRoom', 'sendChatMessage'));

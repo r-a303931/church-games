@@ -16,6 +16,10 @@ export interface SelfNewChatAction extends Action<'NEW_CHAT'> {
 	message: string;
 }
 
+export interface SelectGameTypeAction extends Action<'SELECT_GAME_TYPE'> {
+	gameType: GameType;
+}
+
 export const joinRoom = (participant: RoomParticipant): Actions => ({
 	type: 'JOIN_ROOM',
 	participant,
@@ -34,7 +38,7 @@ export const sendChat = (participant: RoomParticipant) => (message: string): Act
 
 export type OtherPlayerAction<T extends SelfActions> = T & { participant: RoomParticipant };
 
-export type Actions = OtherPlayerAction<SelfActions>;
+export type Actions = OtherPlayerAction<SelfActions> | SelectGameTypeAction;
 
 export type SelfActions =
 	| SelfNewChatAction

@@ -89,6 +89,13 @@ export interface GameRoom {
 	participants: RoomParticipant[];
 }
 
+export interface UnoGameRoom extends GameRoom {
+	/**
+	 * A specific type of room for the Uno game
+	 */
+	currentGame: UNO.Game;
+}
+
 export interface WaitingRoom {
 	/**
 	 * Used for addressing
@@ -124,9 +131,14 @@ export interface WaitingRoom {
 	 * The room participants, who can all chat
 	 */
 	participants: RoomParticipant[];
+
+	/**
+	 * This is the game that is being looked at for being played
+	 */
+	gameSelection: MaybeObj<GameType>;
 }
 
-export type Room = WaitingRoom | GameRoom;
+export type Room = WaitingRoom | UnoGameRoom;
 
 /**
  * A more secure object than Room to send

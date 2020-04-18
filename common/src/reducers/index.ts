@@ -1,6 +1,7 @@
 import { Actions } from '../actions';
 import { GameType, Room } from '../types';
 import unoReducer, { FullUnoReducer } from './uno';
+import { Maybe } from '../lib';
 
 export { unoReducer };
 
@@ -39,6 +40,9 @@ export default (currentTime: () => number) => (unoReducerFunc: FullUnoReducer) =
 						...state,
 						currentGame: unoReducerFunc(state.currentGame, action.gameAction),
 					};
+
+				default:
+					return state;
 			}
 		}
 
@@ -58,6 +62,17 @@ export default (currentTime: () => number) => (unoReducerFunc: FullUnoReducer) =
 						sent: currentTime(),
 					},
 				],
+			};
+		}
+
+		case 'SELECT_GAME_TYPE': {
+			if (state.hasGame) {
+				return state;
+			}
+
+			return {
+				...state,
+				gameSelection: Maybe.some(action.gameType),
 			};
 		}
 	}
