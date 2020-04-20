@@ -121,6 +121,31 @@ export const selectGame = (socket: SocketIOClient.Socket, gameType: GameType) =>
 ) => {
 	emitAction(socket)({ type: 'SELECT_GAME_TYPE', gameType });
 };
+
+export const readyUp = (socket: SocketIOClient.Socket) => (
+	dispatchEvent: Dispatch<ClientActions>
+) => {
+	emitAction(socket)({ type: 'READY_UP' });
+};
+
+export const unreadyUp = (socket: SocketIOClient.Socket) => (
+	dispatchEvent: Dispatch<ClientActions>
+) => {
+	emitAction(socket)({ type: 'UNREADY_UP' });
+};
+
+export const startUnoGame = (socket: SocketIOClient.Socket, playerIDs: string[]) => (
+	dispatchEvent: Dispatch<ClientActions>
+) => {
+	emitAction(socket)({
+		type: 'GAME_ACTION',
+		gameType: GameType.UNO,
+		gameAction: {
+			type: 'INIT',
+			playerIDs,
+		},
+	});
+};
 //#endregion
 
 export type ClientActions =

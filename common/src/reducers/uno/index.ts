@@ -1,7 +1,13 @@
 import { UNO } from '../../types';
 import { UnoActions, InitAction, InitializedAction } from '../../actions/uno';
 
-export type FullUnoReducer = (game: UNO.Game, action: UnoActions) => UNO.Game;
+declare function UnoReducer(game: undefined, action: InitAction | InitializedAction): UNO.Game;
+declare function UnoReducer(
+	game: UNO.Game,
+	action: Exclude<UnoActions, InitAction | InitializedAction>
+): UNO.Game;
+
+export type FullUnoReducer = typeof UnoReducer;
 
 export default (
 	game: UNO.Game,

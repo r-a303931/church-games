@@ -65,9 +65,6 @@ export default (
 			const roomAfter = store.getState().rooms[action.roomID];
 
 			if (roomBefore) {
-				console.log('running');
-				console.log(action.action);
-
 				if (action.action.type === 'GAME_ACTION' && roomAfter.hasGame) {
 					const dispatcher = dispatchToRoomForSockets(roomAfter);
 					if (

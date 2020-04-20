@@ -1,9 +1,13 @@
 import { Actions } from '../actions';
 import { GameType, Room } from '../types';
 import unoReducer, { FullUnoReducer } from './uno';
-import { Maybe } from '../lib';
+import { Maybe, unolib } from '../lib';
 
 export { unoReducer };
+
+const gameFilters = {
+	[GameType.UNO]: unolib.isEnoughPlayers,
+};
 
 /**
  * Why in the world would this accept another reducer as a function?
@@ -23,6 +27,16 @@ export default (currentTime: () => number) => (unoReducerFunc: FullUnoReducer) =
 		}
 
 		case 'LEAVE_ROOM': {
+			if (!state.hasGame) {
+				return {
+					...state,
+					playerIDs: state.playerIDs.filter(id => id !== action.participant.id),
+					participants: state.participants.filter(
+						({ id }) => id !== action.participant.id
+					),
+				};
+			}
+
 			return {
 				...state,
 				participants: state.participants.filter(({ id }) => id !== action.participant.id),
@@ -30,7 +44,30 @@ export default (currentTime: () => number) => (unoReducerFunc: FullUnoReducer) =
 		}
 
 		case 'GAME_ACTION': {
-			if (!state.hasGame || action.gameType !== state.currentGame.type) {
+			if (!state.hasGame) {
+				if (action.gameAction.type === 'INIT' || action.gameAction.type === 'INIT_DONE') {
+					switch (action.gameType) {
+						case GameType.UNO:
+							return {
+								chat: state.chat,
+								currentGame: unoReducerFunc(undefined, action.gameAction),
+								hasGame: true,
+								id: state.id,
+								name: state.name,
+								participants: state.participants,
+								password: state.password,
+							};
+					}
+				} else {
+					return state;
+				}
+			}
+
+			if (action.gameType !== state.currentGame.type) {
+				return state;
+			}
+
+			if (action.gameAction.type === 'INIT_DONE' || action.gameAction.type === 'INIT') {
 				return state;
 			}
 
@@ -73,6 +110,42 @@ export default (currentTime: () => number) => (unoReducerFunc: FullUnoReducer) =
 			return {
 				...state,
 				gameSelection: Maybe.some(action.gameType),
+			};
+		}
+
+		case 'UNREADY_UP': {
+			if (state.hasGame || !('participant' in action)) {
+				return state;
+			}
+
+			const playerIDs = state.playerIDs.filter(id => id !== action.participant.id);
+
+			const gameSelection = Maybe.filter<GameType>(game =>
+				gameFilters[game](playerIDs.length)
+			)(state.gameSelection);
+
+			return {
+				...state,
+				playerIDs,
+				gameSelection,
+			};
+		}
+
+		case 'READY_UP': {
+			if (state.hasGame || !('participant' in action)) {
+				return state;
+			}
+
+			const playerIDs = [...state.playerIDs, action.participant.id];
+
+			const gameSelection = Maybe.filter<GameType>(game =>
+				gameFilters[game](playerIDs.length)
+			)(state.gameSelection);
+
+			return {
+				...state,
+				gameSelection,
+				playerIDs,
 			};
 		}
 	}

@@ -51,7 +51,7 @@ export default (randomFunction: Random): FullUnoReducer => {
 	const shuffle = shuffleArray(randomFunction);
 	const uuid = uuidBase(randomFunction);
 
-	return (game: UNO.Game, action: UnoActions): UNO.Game => {
+	return (game: UNO.Game | undefined, action: UnoActions): UNO.Game => {
 		if (action.type === 'INIT') {
 			let deck = shuffle(defaultDeck).map(
 				card =>
@@ -96,6 +96,6 @@ export default (randomFunction: Random): FullUnoReducer => {
 			throw new Error('Server received `INIT_DONE` action');
 		}
 
-		return unoReducer(game, action);
+		return unoReducer(game!, action);
 	};
 };
