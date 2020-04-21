@@ -1,11 +1,12 @@
-import { Actions, GameType, Room, RoomParticipant, Maybe } from 'common';
+import { Actions, GameType, Maybe, Room, RoomParticipant } from 'common';
 import { Middleware } from 'redux';
 import { Server, Socket } from 'socket.io';
 import { getSmallRooms } from '..';
 import { ServerActions } from '../actions';
 import { ServerState } from '../createStore';
-import secureGameForMember from './secureGameForMember';
 import participantRoom from './participantRoom';
+import secureGameForMember from './secureGameForMember';
+import { unoDispatcher } from './syncStateFunctions';
 
 export type ActionGenerator = (participant: RoomParticipant) => Actions;
 
@@ -23,11 +24,14 @@ const dispatchToRoom = (sockets: { [key: string]: Socket }) => (room: Room) => (
 	}
 };
 
+export type Dispatcher = ReturnType<typeof dispatchToRoom>;
+
 export default (
 	mainServer: Server,
 	sockets: { [key: string]: Socket }
 ): Middleware<{}, ServerState> => store => next => (action: ServerActions) => {
 	const dispatchToRoomForSockets = dispatchToRoom(sockets);
+	const unoDispatcherForSockets = unoDispatcher(dispatchToRoomForSockets);
 
 	switch (action.type) {
 		case 'JOIN_ROOM':
@@ -80,8 +84,14 @@ export default (
 							gameType: GameType.UNO,
 							participant,
 						}));
+					} else if (action.action.gameType === GameType.UNO) {
+						unoDispatcherForSockets(roomAfter, action.action.gameAction);
 					} else {
 						dispatcher(action.action);
+					}
+
+					switch (action.action.gameType) {
+
 					}
 				} else if (action.action.type === 'LEAVE_ROOM') {
 					const dispatcher = dispatchToRoomForSockets(roomBefore);
