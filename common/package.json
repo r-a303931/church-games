@@ -21,6 +21,7 @@
 		"typescript": "^3.8.3"
 	},
 	"dependencies": {
+		"@types/uuid": "^7.0.2",
 		"ramda": "^0.27.0",
 		"redux": "^4.0.5"
 	},

@@ -13,6 +13,10 @@ import {
 	Toolbar,
 	Typography,
 	useTheme,
+	Button,
+	Modal,
+	Fade,
+	Backdrop
 } from '@material-ui/core';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import CloseIcon from '@material-ui/icons/Close';
@@ -172,6 +176,18 @@ const useStyles = makeStyles(theme => ({
 		paddingTop: 0,
 		paddingBottom: 0,
 	},
+	paper: {
+		backgroundColor: theme.palette.background.paper,
+		border: '2px solid #000',
+		boxShadow: theme.shadows[5],
+		padding: theme.spacing(2, 4, 3),
+		textAlign: 'center'
+	},
+	modal: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
 }));
 
 export const getAvatarURL = (name: string) =>
@@ -316,12 +332,13 @@ export const RoomRender: FunctionComponent<FullConvertedProps<
 	const styles = useStyles();
 	const theme = useTheme();
 	const [drawerIsOpen, setDrawerIsOpen] = useState<boolean>(true);
+	const [leaveRoomDialogIsOpen, setLeaveRoomDialogIsOpen] = useState<boolean>(false);
 
 	const handleDrawerOpen = () => setDrawerIsOpen(true);
 
 	const handleDrawerClose = () => setDrawerIsOpen(false);
 
-	const handleLeaveRoom = () => leaveRoom();
+	const almostLeaveRoom = () => setLeaveRoomDialogIsOpen(true);
 
 	const participantRenderer = RenderParticipant(styles.marginLeft);
 	const chatRenderer = RenderChatItems(styles)(participants)(me);
@@ -373,7 +390,7 @@ export const RoomRender: FunctionComponent<FullConvertedProps<
 							<ChevronRightIcon />
 						</IconButton>
 						<IconButton
-							onClick={handleLeaveRoom}
+							onClick={almostLeaveRoom}
 							className={styles.floatRight}
 							title="Leave room"
 						>
@@ -394,6 +411,39 @@ export const RoomRender: FunctionComponent<FullConvertedProps<
 					<ConnectedChatInput styles={styles} />
 				</div>
 			</Drawer>
+			<Modal
+				className={styles.modal}
+				open={leaveRoomDialogIsOpen}
+				onClose={() => setLeaveRoomDialogIsOpen(false)}
+				closeAfterTransition={true}
+				BackdropComponent={Backdrop}
+				BackdropProps={{
+					timeout: 500,
+				}}
+			>
+				<Fade in={leaveRoomDialogIsOpen}>
+					<div className={styles.paper}>
+						{hasGame ? "Forfeit the match?" : "Leave the room?"}
+						<br />
+						<br />
+						<Button 
+							variant="contained"
+							color="secondary"
+							onClick={leaveRoom}
+						>
+							{hasGame ? "Forfeit" : "Leave room"}
+						</Button>
+						<Button
+							variant="contained"
+							className={styles.marginLeft}
+							color="primary"
+							onClick={() => setLeaveRoomDialogIsOpen(false)}
+						>
+							Stay in room
+						</Button>
+					</div>
+				</Fade>
+			</Modal>
 		</div>
 	);
 };
