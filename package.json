@@ -29,7 +29,7 @@
 		"ramda": "^0.27.0",
 		"redux": "^4.0.5",
 		"redux-logger": "^3.0.6",
-		"socket.io": "^2.3.0",
+		"socket.io": "^2.4.0",
 		"uuid": "^7.0.3"
 	},
 	"jest": {
